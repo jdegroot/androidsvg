@@ -107,7 +107,7 @@ public class SVGAndroidRenderer
    private Stack<Canvas>  canvasStack;
    private Stack<Bitmap>  bitmapStack;
 
-    private Colour mColour;
+    private Colour mFillPaintColour;
 
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
@@ -188,10 +188,6 @@ public class SVGAndroidRenderer
       state.spacePreserve = false;
       state.directRendering = this.directRenderingMode;
 
-       if (mColour != null) {
-           state.fillPaint.setColorFilter(new LightingColorFilter(Color.BLACK, mColour.colour));
-       }
-
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
 
@@ -226,7 +222,7 @@ public class SVGAndroidRenderer
       this.canvas = canvas;
       this.dpi = defaultDPI;
       this.canvasViewPort = viewPort;
-       this.mColour = new Colour(color);
+       this.mFillPaintColour = new Colour(color);
    }
 
 
@@ -2075,303 +2071,263 @@ public class SVGAndroidRenderer
     * Updates the global style state with the style defined by the current object.
     * Will also update the current paints etc where appropriate.
     */
-   private void updateStyle(RendererState state, Style style)
-   {
-      // Now update each style property we know about
-      if (isSpecified(style, SVG.SPECIFIED_COLOR))
-      {
-         state.style.color = style.color;
-      }
+   private void updateStyle(RendererState state, Style style) {
+       // Now update each style property we know about
+       if (isSpecified(style, SVG.SPECIFIED_COLOR)) {
+           state.style.color = style.color;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_OPACITY))
-      {
-         state.style.opacity = style.opacity;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_OPACITY)) {
+           state.style.opacity = style.opacity;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FILL))
-      {
-         state.style.fill = style.fill;
-         state.hasFill = (style.fill != null);
-      }
+       if (isSpecified(style, SVG.SPECIFIED_FILL)) {
+           state.style.fill = style.fill;
+           state.hasFill = (style.fill != null);
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FILL_OPACITY))
-      {
-         state.style.fillOpacity = style.fillOpacity;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_FILL_OPACITY)) {
+           state.style.fillOpacity = style.fillOpacity;
+       }
 
-      // If either fill or its opacity has changed, update the fillPaint
-      if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
-      {
-         setPaintColour(state, true, state.style.fill);
-      }
+       // If either fill or its opacity has changed, update the fillPaint
+       if (isSpecified(style, SVG.SPECIFIED_FILL | SVG.SPECIFIED_FILL_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY)) {
+           setPaintColour(state, true, state.style.fill);
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_FILL_RULE))
-      {
-         state.style.fillRule = style.fillRule;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_FILL_RULE)) {
+           state.style.fillRule = style.fillRule;
+       }
 
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE))
-      {
-         state.style.stroke = style.stroke;
-         state.hasStroke = (style.stroke != null);
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE)) {
+           state.style.stroke = style.stroke;
+           state.hasStroke = (style.stroke != null);
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_OPACITY))
-      {
-         state.style.strokeOpacity = style.strokeOpacity;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_OPACITY)) {
+           state.style.strokeOpacity = style.strokeOpacity;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY))
-      {
-         setPaintColour(state, false, state.style.stroke);
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE | SVG.SPECIFIED_STROKE_OPACITY | SVG.SPECIFIED_COLOR | SVG.SPECIFIED_OPACITY)) {
+           setPaintColour(state, false, state.style.stroke);
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VECTOR_EFFECT))
-      {
-         state.style.vectorEffect = style.vectorEffect;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_VECTOR_EFFECT)) {
+           state.style.vectorEffect = style.vectorEffect;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH))
-      {
-         state.style.strokeWidth = style.strokeWidth;
-         state.strokePaint.setStrokeWidth(state.style.strokeWidth.floatValue(this));
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_WIDTH)) {
+           state.style.strokeWidth = style.strokeWidth;
+           state.strokePaint.setStrokeWidth(state.style.strokeWidth.floatValue(this));
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_LINECAP))
-      {
-         state.style.strokeLineCap = style.strokeLineCap;
-         switch (style.strokeLineCap)
-         {
-            case Butt:
-               state.strokePaint.setStrokeCap(Paint.Cap.BUTT);
-               break;
-            case Round:
-               state.strokePaint.setStrokeCap(Paint.Cap.ROUND);
-               break;
-            case Square:
-               state.strokePaint.setStrokeCap(Paint.Cap.SQUARE);
-               break;
-            default:
-               break;
-         }
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_LINECAP)) {
+           state.style.strokeLineCap = style.strokeLineCap;
+           switch (style.strokeLineCap) {
+               case Butt:
+                   state.strokePaint.setStrokeCap(Paint.Cap.BUTT);
+                   break;
+               case Round:
+                   state.strokePaint.setStrokeCap(Paint.Cap.ROUND);
+                   break;
+               case Square:
+                   state.strokePaint.setStrokeCap(Paint.Cap.SQUARE);
+                   break;
+               default:
+                   break;
+           }
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_LINEJOIN))
-      {
-         state.style.strokeLineJoin = style.strokeLineJoin;
-         switch (style.strokeLineJoin)
-         {
-            case Miter:
-               state.strokePaint.setStrokeJoin(Paint.Join.MITER);
-               break;
-            case Round:
-               state.strokePaint.setStrokeJoin(Paint.Join.ROUND);
-               break;
-            case Bevel:
-               state.strokePaint.setStrokeJoin(Paint.Join.BEVEL);
-               break;
-            default:
-               break;
-         }
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_LINEJOIN)) {
+           state.style.strokeLineJoin = style.strokeLineJoin;
+           switch (style.strokeLineJoin) {
+               case Miter:
+                   state.strokePaint.setStrokeJoin(Paint.Join.MITER);
+                   break;
+               case Round:
+                   state.strokePaint.setStrokeJoin(Paint.Join.ROUND);
+                   break;
+               case Bevel:
+                   state.strokePaint.setStrokeJoin(Paint.Join.BEVEL);
+                   break;
+               default:
+                   break;
+           }
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_MITERLIMIT))
-      {
-         state.style.strokeMiterLimit = style.strokeMiterLimit;
-         state.strokePaint.setStrokeMiter(style.strokeMiterLimit);
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_MITERLIMIT)) {
+           state.style.strokeMiterLimit = style.strokeMiterLimit;
+           state.strokePaint.setStrokeMiter(style.strokeMiterLimit);
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY))
-      {
-         state.style.strokeDashArray = style.strokeDashArray;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY)) {
+           state.style.strokeDashArray = style.strokeDashArray;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHOFFSET))
-      {
-         state.style.strokeDashOffset = style.strokeDashOffset;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHOFFSET)) {
+           state.style.strokeDashOffset = style.strokeDashOffset;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY | SVG.SPECIFIED_STROKE_DASHOFFSET))
-      {
-         // Either the dash array or dash offset has changed.
-         if (state.style.strokeDashArray == null)
-         {
-            state.strokePaint.setPathEffect(null);
-         }
-         else
-         {
-            float  intervalSum = 0f;
-            int    n = state.style.strokeDashArray.length;
-            // SVG dash arrays can be odd length, whereas Android dash arrays must have an even length.
-            // So we solve the problem by doubling the array length.
-            int    arrayLen = (n % 2==0) ? n : n*2;
-            float[] intervals = new float[arrayLen];
-            for (int i=0; i<arrayLen; i++) {
-               intervals[i] = state.style.strokeDashArray[i % n].floatValue(this);
-               intervalSum += intervals[i];
-            }
-            if (intervalSum == 0f) {
+       if (isSpecified(style, SVG.SPECIFIED_STROKE_DASHARRAY | SVG.SPECIFIED_STROKE_DASHOFFSET)) {
+           // Either the dash array or dash offset has changed.
+           if (state.style.strokeDashArray == null) {
                state.strokePaint.setPathEffect(null);
-            } else {
-               float offset = state.style.strokeDashOffset.floatValue(this);
-               if (offset < 0) {
-                  // SVG offsets can be negative. Not sure if Android ones can be.
-                  // Just in case we will convert it.
-                  offset = intervalSum + (offset % intervalSum);
+           } else {
+               float intervalSum = 0f;
+               int n = state.style.strokeDashArray.length;
+               // SVG dash arrays can be odd length, whereas Android dash arrays must have an even length.
+               // So we solve the problem by doubling the array length.
+               int arrayLen = (n % 2 == 0) ? n : n * 2;
+               float[] intervals = new float[arrayLen];
+               for (int i = 0; i < arrayLen; i++) {
+                   intervals[i] = state.style.strokeDashArray[i % n].floatValue(this);
+                   intervalSum += intervals[i];
                }
-               state.strokePaint.setPathEffect( new DashPathEffect(intervals, offset) );
-            }
-         }
-      }
-
-      if (isSpecified(style, SVG.SPECIFIED_FONT_SIZE))
-      {
-         float  currentFontSize = getCurrentFontSize();
-         state.style.fontSize = style.fontSize;
-         state.fillPaint.setTextSize(style.fontSize.floatValue(this, currentFontSize));
-         state.strokePaint.setTextSize(style.fontSize.floatValue(this, currentFontSize));
-      }
-
-      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY))
-      {
-         state.style.fontFamily = style.fontFamily;
-      }
-
-      if (isSpecified(style, SVG.SPECIFIED_FONT_WEIGHT))
-      {
-         // Font weights are 100,200...900
-         if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > 100)
-            state.style.fontWeight -= 100;
-         else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < 900)
-            state.style.fontWeight += 100;
-         else
-            state.style.fontWeight = style.fontWeight;
-      }
-
-      if (isSpecified(style, SVG.SPECIFIED_FONT_STYLE))
-      {
-         state.style.fontStyle = style.fontStyle;
-      }
-
-      // If typeface, weight or style has changed, update the paint typeface
-      if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE))
-      {
-         SVGExternalFileResolver  fileResolver = null;
-         Typeface  font = null;
-
-         if (state.style.fontFamily != null && document != null) {
-            fileResolver = document.getFileResolver();
-
-            for (String fontName: state.style.fontFamily) {
-               font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
-               if (font == null && fileResolver != null) {
-                  font = fileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle));
+               if (intervalSum == 0f) {
+                   state.strokePaint.setPathEffect(null);
+               } else {
+                   float offset = state.style.strokeDashOffset.floatValue(this);
+                   if (offset < 0) {
+                       // SVG offsets can be negative. Not sure if Android ones can be.
+                       // Just in case we will convert it.
+                       offset = intervalSum + (offset % intervalSum);
+                   }
+                   state.strokePaint.setPathEffect(new DashPathEffect(intervals, offset));
                }
-               if (font != null)
-                  break;
-            }
-         }
-         if (font == null) {
-            // Fall back to default font
-            font = checkGenericFont(DEFAULT_FONT_FAMILY, state.style.fontWeight, state.style.fontStyle);
-         }
-         state.fillPaint.setTypeface(font);
-         state.strokePaint.setTypeface(font);
-      }
+           }
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_TEXT_DECORATION))
-      {
-         state.style.textDecoration = style.textDecoration;
-         state.fillPaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
-         state.fillPaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
-         // There is a bug in Android <= JELLY_BEAN (16) that causes stroked underlines to
-         // not be drawn properly. See bug (39511). This has been fixed in JELLY_BEAN_MR1 (4.2)
-         if (android.os.Build.VERSION.SDK_INT >= 17) {
-            state.strokePaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
-            state.strokePaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
-         }
-      }
+       if (isSpecified(style, SVG.SPECIFIED_FONT_SIZE)) {
+           float currentFontSize = getCurrentFontSize();
+           state.style.fontSize = style.fontSize;
+           state.fillPaint.setTextSize(style.fontSize.floatValue(this, currentFontSize));
+           state.strokePaint.setTextSize(style.fontSize.floatValue(this, currentFontSize));
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_DIRECTION))
-      {
-         state.style.direction = style.direction;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY)) {
+           state.style.fontFamily = style.fontFamily;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_TEXT_ANCHOR))
-      {
-         state.style.textAnchor = style.textAnchor;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_FONT_WEIGHT)) {
+           // Font weights are 100,200...900
+           if (style.fontWeight == Style.FONT_WEIGHT_LIGHTER && state.style.fontWeight > 100)
+               state.style.fontWeight -= 100;
+           else if (style.fontWeight == Style.FONT_WEIGHT_BOLDER && state.style.fontWeight < 900)
+               state.style.fontWeight += 100;
+           else
+               state.style.fontWeight = style.fontWeight;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_OVERFLOW))
-      {
-         state.style.overflow = style.overflow;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_FONT_STYLE)) {
+           state.style.fontStyle = style.fontStyle;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_MARKER_START))
-      {
-         state.style.markerStart = style.markerStart;
-      }
+       // If typeface, weight or style has changed, update the paint typeface
+       if (isSpecified(style, SVG.SPECIFIED_FONT_FAMILY | SVG.SPECIFIED_FONT_WEIGHT | SVG.SPECIFIED_FONT_STYLE)) {
+           SVGExternalFileResolver fileResolver = null;
+           Typeface font = null;
 
-      if (isSpecified(style, SVG.SPECIFIED_MARKER_MID))
-      {
-         state.style.markerMid = style.markerMid;
-      }
+           if (state.style.fontFamily != null && document != null) {
+               fileResolver = document.getFileResolver();
 
-      if (isSpecified(style, SVG.SPECIFIED_MARKER_END))
-      {
-         state.style.markerEnd = style.markerEnd;
-      }
+               for (String fontName : state.style.fontFamily) {
+                   font = checkGenericFont(fontName, state.style.fontWeight, state.style.fontStyle);
+                   if (font == null && fileResolver != null) {
+                       font = fileResolver.resolveFont(fontName, state.style.fontWeight, String.valueOf(state.style.fontStyle));
+                   }
+                   if (font != null)
+                       break;
+               }
+           }
+           if (font == null) {
+               // Fall back to default font
+               font = checkGenericFont(DEFAULT_FONT_FAMILY, state.style.fontWeight, state.style.fontStyle);
+           }
+           state.fillPaint.setTypeface(font);
+           state.strokePaint.setTypeface(font);
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_DISPLAY))
-      {
-         state.style.display = style.display;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_TEXT_DECORATION)) {
+           state.style.textDecoration = style.textDecoration;
+           state.fillPaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
+           state.fillPaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
+           // There is a bug in Android <= JELLY_BEAN (16) that causes stroked underlines to
+           // not be drawn properly. See bug (39511). This has been fixed in JELLY_BEAN_MR1 (4.2)
+           if (android.os.Build.VERSION.SDK_INT >= 17) {
+               state.strokePaint.setStrikeThruText(style.textDecoration == TextDecoration.LineThrough);
+               state.strokePaint.setUnderlineText(style.textDecoration == TextDecoration.Underline);
+           }
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VISIBILITY))
-      {
-         state.style.visibility = style.visibility;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_DIRECTION)) {
+           state.style.direction = style.direction;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_CLIP))
-      {
-         state.style.clip = style.clip;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_TEXT_ANCHOR)) {
+           state.style.textAnchor = style.textAnchor;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_CLIP_PATH))
-      {
-         state.style.clipPath = style.clipPath;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_OVERFLOW)) {
+           state.style.overflow = style.overflow;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_CLIP_RULE))
-      {
-         state.style.clipRule = style.clipRule;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_MARKER_START)) {
+           state.style.markerStart = style.markerStart;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_MASK))
-      {
-         state.style.mask = style.mask;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_MARKER_MID)) {
+           state.style.markerMid = style.markerMid;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STOP_COLOR))
-      {
-         state.style.stopColor = style.stopColor;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_MARKER_END)) {
+           state.style.markerEnd = style.markerEnd;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_STOP_OPACITY))
-      {
-         state.style.stopOpacity = style.stopOpacity;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_DISPLAY)) {
+           state.style.display = style.display;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL))
-      {
-         state.style.viewportFill = style.viewportFill;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_VISIBILITY)) {
+           state.style.visibility = style.visibility;
+       }
 
-      if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL_OPACITY))
-      {
-         state.style.viewportFillOpacity = style.viewportFillOpacity;
-      }
+       if (isSpecified(style, SVG.SPECIFIED_CLIP)) {
+           state.style.clip = style.clip;
+       }
+
+       if (isSpecified(style, SVG.SPECIFIED_CLIP_PATH)) {
+           state.style.clipPath = style.clipPath;
+       }
+
+       if (isSpecified(style, SVG.SPECIFIED_CLIP_RULE)) {
+           state.style.clipRule = style.clipRule;
+       }
+
+       if (isSpecified(style, SVG.SPECIFIED_MASK)) {
+           state.style.mask = style.mask;
+       }
+
+       if (isSpecified(style, SVG.SPECIFIED_STOP_COLOR)) {
+           state.style.stopColor = style.stopColor;
+       }
+
+       if (isSpecified(style, SVG.SPECIFIED_STOP_OPACITY)) {
+           state.style.stopOpacity = style.stopOpacity;
+       }
+
+       if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL)) {
+           state.style.viewportFill = style.viewportFill;
+       }
+
+       if (isSpecified(style, SVG.SPECIFIED_VIEWPORT_FILL_OPACITY)) {
+           state.style.viewportFillOpacity = style.viewportFillOpacity;
+       }
+
+       if (mFillPaintColour != null)
+       {
+           state.fillPaint.setColorFilter(new LightingColorFilter(Color.BLACK, mFillPaintColour.colour));
+       }
 
    }
 
