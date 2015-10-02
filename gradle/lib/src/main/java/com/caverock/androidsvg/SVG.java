@@ -393,6 +393,11 @@ public class SVG
     */
    public void  renderToCanvas(Canvas canvas, RectF viewPort)
    {
+      renderToCanvas(canvas, viewPort, 0);
+   }
+
+   public void renderToCanvas(Canvas canvas, RectF viewPort, int color)
+   {
       Box  svgViewPort;
 
       if (viewPort != null) {
@@ -401,7 +406,7 @@ public class SVG
          svgViewPort = new Box(0f, 0f, (float) canvas.getWidth(), (float) canvas.getHeight());
       }
 
-      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI);
+      SVGAndroidRenderer  renderer = new SVGAndroidRenderer(canvas, svgViewPort, this.renderDPI, color);
 
       renderer.renderDocument(this, null, null, true);
    }
@@ -1408,7 +1413,7 @@ public class SVG
    {
       public String        id = null;
       public Boolean       spacePreserve = null;
-      public Style         baseStyle = null;   // style defined by explicit style attributes in the element (eg. fill="black")  
+      public Style         baseStyle = null;   // style defined by explicit style attributes in the element (eg. fill="black")
       public Style         style = null;       // style expressed in a 'style' attribute (eg. style="fill:black")
       public List<String>  classNames = null;  // contents of the 'class' attribute
    }
@@ -1797,7 +1802,7 @@ public class SVG
    {
       public Float  offset;
 
-      // Dummy container methods. Stop is officially a container, but we 
+      // Dummy container methods. Stop is officially a container, but we
       // are not interested in any of its possible child elements.
       @Override
       public List<SvgObject> getChildren() { return Collections.emptyList(); }
@@ -1879,7 +1884,7 @@ public class SVG
       public Length  solidColor;
       public Length  solidOpacity;
 
-      // Dummy container methods. Stop is officially a container, but we 
+      // Dummy container methods. Stop is officially a container, but we
       // are not interested in any of its possible child elements.
       @Override
       public List<SvgObject> getChildren() { return Collections.emptyList(); }

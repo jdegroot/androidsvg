@@ -28,7 +28,9 @@ import java.util.Stack;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.DashPathEffect;
+import android.graphics.LightingColorFilter;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -104,6 +106,8 @@ public class SVGAndroidRenderer
    // Canvas stack for when we are processing mask elements
    private Stack<Canvas>  canvasStack;
    private Stack<Bitmap>  bitmapStack;
+
+    private Colour mColour;
 
 
    private static final float  BEZIER_ARC_FACTOR = 0.5522847498f;
@@ -184,6 +188,10 @@ public class SVGAndroidRenderer
       state.spacePreserve = false;
       state.directRendering = this.directRenderingMode;
 
+       if (mColour != null) {
+           state.fillPaint.setColorFilter(new LightingColorFilter(Color.BLACK, mColour.colour));
+       }
+
       // Push a copy of the state with 'default' style, so that inherit works for top level objects
       stateStack.push((RendererState) state.clone());   // Manual push here - don't use statePush();
 
@@ -211,6 +219,14 @@ public class SVGAndroidRenderer
       this.canvas = canvas;
       this.dpi = defaultDPI;
       this.canvasViewPort = viewPort;
+   }
+
+   protected SVGAndroidRenderer(Canvas canvas, SVG.Box viewPort, float defaultDPI, int color)
+   {
+      this.canvas = canvas;
+      this.dpi = defaultDPI;
+      this.canvasViewPort = viewPort;
+       this.mColour = new Colour(color);
    }
 
 
